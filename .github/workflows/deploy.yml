@@ -1,0 +1,31 @@
+name: Deploy to Lambda
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      # 1. Code ko GitHub se uthana
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      # 2. AWS mein login karna (Secrets use karke)
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      # 3. Code ko pack karna (Zip banana)
+      - name: Zip Code
+        run: zip -r deploy_package.zip lambda_function.py
+
+      # 4. Lambda function ko update karna
+      - name: Update Lambda Code
+        run: |
+          aws lambda update-function-code --function-name InventoryFunction --zip-file fileb://deploy_package.zip
